@@ -1,15 +1,15 @@
 // src/components/nodes/BaseNode.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { HandleProps } from 'reactflow';
 import { useStore } from '../../store';
-import { NodeHeader } from '../shared/styles/nodeStyles';
+import { keyframes, NodeHeader, spinnerStyle } from '../shared/styles/nodeStyles';
 import { StyledHandleWithLabel, StyledHandle, HandleLabel } from '../shared/styles/handleStyles';
 import { FlexColumn } from '../shared/styles/flexColumn';
 import { NoBorderWrapper } from '../shared/styles/noBorderWrapper';
 import theme from '../../theme';
 import LabeledBox from '../shared/LabeledBox';
-import { FaPencilAlt, FaCheck } from 'react-icons/fa';
+import { FaPencilAlt, FaCheck, FaSpinner } from 'react-icons/fa';
 
 interface BaseNodeProps {
   id: string;
@@ -20,23 +20,31 @@ interface BaseNodeProps {
   onSubmit?: (...args: any[]) => void;
 }
 
+const injectKeyframes = () => {
+  if (!document.getElementById('spinner-keyframes')) {
+    const style = document.createElement('style');
+    style.id = 'spinner-keyframes';
+    style.innerHTML = keyframes;
+    document.head.appendChild(style);
+  }
+};
+
 const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initialText, onSubmit }) => {
   const [text, setText] = useState(initialText || "");
   const [editing, setEditing] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [connectedHandles, setConnectedHandles] = useState<string[]>([]);
 
   const edges = useStore((state) => state.edges);
   const textAreaRef: React.RefObject<HTMLTextAreaElement> = useRef(null);
 
-  const isHandleConnected = (handleId: string) => {
-    return edges.some((edge) => edge.sourceHandle === handleId || edge.targetHandle === handleId);
-  };
-
-  const [connectedHandles, setConnectedHandles] = useState<string[]>([]);
-
-  useEffect(() => {
-    const connectedHandles = handles.map(handle => `${id}-${handle.id}`).filter(isHandleConnected);
-    setConnectedHandles(connectedHandles);
-  }, [edges, handles, id]);
+  const isHandleConnected = useCallback(
+    (handleId: string) => {
+      return edges.some((edge) => edge.sourceHandle === handleId || edge.targetHandle === handleId);
+    },
+    [edges]
+  );
 
   useEffect(() => {
     const textArea = textAreaRef.current;
@@ -49,9 +57,21 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
     }
   }, [text]);
 
+  useEffect(() => {
+    injectKeyframes(); // Inject keyframes when the component mounts
+  }, []);
+
   const handleToggleEdit = async () => {
     if (editing && onSubmit) {
-      await onSubmit(id, text, { position });
+      setLoading(true);
+      setError(null);
+      try {
+        await onSubmit(id, text, { position });
+      } catch (err) {
+        setError('Failed to submit');
+      } finally {
+        setLoading(false);
+      }
     }
     setEditing(!editing);
   };
@@ -60,12 +80,17 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
     <>
       <NodeHeader>
         <span>{label}</span>
-        <button onClick={handleToggleEdit} style={{ right: '0', background: 'none', border: 'none', cursor: 'pointer', color: `${theme.colors.secondary}` }}>
-          {editing ? <FaCheck /> : <FaPencilAlt />}
+        <button
+          onClick={handleToggleEdit}
+          style={{ right: '0', background: 'none', border: 'none', cursor: 'pointer', color: `${theme.colors.secondary}` }}
+          disabled={loading}
+        >
+          {loading ? <FaSpinner style={spinnerStyle} /> : (editing ? <FaCheck /> : <FaPencilAlt />)}
         </button>
       </NodeHeader>
       <FlexColumn>
-        <LabeledBox label={"Text"} editing={editing}>
+        {error && <div style={{ color: 'red' }}>{error}</div>}
+        <LabeledBox label={"Text"} $editing={editing}>
           <NoBorderWrapper>
             <textarea
               ref={textAreaRef}
@@ -87,7 +112,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
             type={handle.type}
             position={handle.position}
             id={`${id}-${handle.id}`}
-            $isConnected={connectedHandles.includes(`${id}-${handle.id}`)}
+            $isConnected={isHandleConnected(`${id}-${handle.id}`)}
           />
           <HandleLabel $position={handle.position}>{handle.id}</HandleLabel>
         </StyledHandleWithLabel>

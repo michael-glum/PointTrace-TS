@@ -2,8 +2,8 @@
 
 import styled from 'styled-components';
 
-export const Container = styled.div<{ editing: boolean }>`
-  border: 1px solid ${({theme, editing}) => editing ? theme.colors.secondary : theme.colors.background };
+export const Container = styled.div<{ $editing: boolean }>`
+  border: 1px solid ${({theme, $editing}) => $editing ? theme.colors.secondary : theme.colors.background };
   border-radius: ${({theme}) => theme.borderRadius};
   padding: ${({theme}) => theme.spacing.small};
   display: flex;
