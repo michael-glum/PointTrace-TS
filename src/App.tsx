@@ -1,25 +1,20 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { FlowCanvas } from './components/workspace/FlowCanvas';
+import Sidebar from './components/workspace/Sidebar';
+import Header from './components/workspace/Header';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Header />
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          <Sidebar />
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <FlowCanvas />
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
