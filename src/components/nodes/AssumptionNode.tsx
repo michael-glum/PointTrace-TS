@@ -11,9 +11,10 @@ const AssumptionNode: React.FC<NodeProps> = ({ id, data }) => {
       id={id}
       label={"Assumption"}
       initialText={data.text}
+      defaultEditing={data.defaultEditing}
       handles={[
-        { type: 'target', position: Position.Top, id: 'in' },
-        { type: 'source', position: Position.Bottom, id: 'out' }
+        { type: 'target', position: Position.Top, id: `${id}-in` },
+        { type: 'source', position: Position.Bottom, id: `${id}-out` }
       ]}
     />
   );

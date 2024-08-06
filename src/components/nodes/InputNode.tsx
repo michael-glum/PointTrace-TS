@@ -13,7 +13,15 @@ const InputNode: React.FC<NodeProps> = ({ id, xPos, yPos }) => {
   };
 
   return (
-    <BaseNode id={id} label={"Input"} handles={[{ type: 'source', position: Position.Bottom, id: 'out' }]} position={{x: xPos, y: yPos}} onSubmit={handleSubmit} />
+    <BaseNode
+      id={id}
+      label={"Input"}
+      handles={[
+        { type: 'source', position: Position.Bottom, id: `${id}-out` }
+      ]}
+      position={{x: xPos, y: yPos}}
+      onSubmit={handleSubmit}
+    />
   );
 }
 

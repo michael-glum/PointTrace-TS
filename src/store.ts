@@ -22,14 +22,20 @@ interface ArgumentState {
   conversationHistory: ConversationEntry[];
 }
 
+interface HandleConnection {
+  [key: string]: boolean;
+}
+
 export interface State {
   nodes: Node[];
   edges: Edge[];
+  handleConnections: HandleConnection;
   nodeIDs: { [type: string]: NodeIDInfo };
   arguments: { [type: string]: ArgumentState };
   getNodeID: (type: string) => string;
   addNode: (node: Node) => void;
   addEdge: (edge: Edge) => void;
+  removeEdge: (edgeId: string) => void;
   updateNodeField: (nodeId: string, fieldName: string, fieldValue: any) => void;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
@@ -43,6 +49,7 @@ export const useStore = createWithEqualityFn<State>(
   (set, get) => ({
     nodes: [],
     edges: [],
+    handleConnections: {},
     nodeIDs: {},
     arguments: {},
     getNodeID: (type: string) => {
@@ -60,9 +67,45 @@ export const useStore = createWithEqualityFn<State>(
       });
     },
     addEdge: (edge: Edge) => {
-      set(state => ({
-        edges: [...state.edges, edge],
-      }));
+      set(state => {
+        const newEdges = [...state.edges, edge];
+        const newConnections = { ...state.handleConnections };
+
+        // Update handle connections, ensuring handleId is defined
+        if (edge.sourceHandle) {
+          newConnections[edge.sourceHandle] = true;
+        }
+        if (edge.targetHandle) {
+          newConnections[edge.targetHandle] = true;
+        }
+
+        return {
+          edges: newEdges,
+          handleConnections: newConnections,
+        };
+      });
+    },
+    removeEdge: (edgeId: string) => {
+      set(state => {
+        const edge = state.edges.find(e => e.id === edgeId);
+        if (!edge) return state;
+
+        const newEdges = state.edges.filter(e => e.id !== edgeId);
+        const newConnections = { ...state.handleConnections };
+
+        // Update handle connections, ensuring handleId is defined
+        if (edge.sourceHandle) {
+          newConnections[edge.sourceHandle] = newEdges.some(e => e.sourceHandle === edge.sourceHandle || e.targetHandle === edge.sourceHandle);
+        }
+        if (edge.targetHandle) {
+          newConnections[edge.targetHandle] = newEdges.some(e => e.sourceHandle === edge.targetHandle || e.targetHandle === edge.targetHandle);
+        }
+
+        return {
+          edges: newEdges,
+          handleConnections: newConnections,
+        };
+      });
     },
     updateNodeField: (nodeId: string, fieldName: string, fieldValue: any) => {
       set({
@@ -85,8 +128,22 @@ export const useStore = createWithEqualityFn<State>(
       });
     },
     onConnect: (connection: Connection) => {
-      set({
-        edges: addEdge({ ...connection }, get().edges),
+      set(state => {
+        const newEdges = addEdge({ ...connection }, state.edges);
+        const newConnections = { ...state.handleConnections };
+
+        // Update handle connections, ensuring handleId is defined
+        if (connection.sourceHandle) {
+          newConnections[connection.sourceHandle] = true;
+        }
+        if (connection.targetHandle) {
+          newConnections[connection.targetHandle] = true;
+        }
+
+        return {
+          edges: newEdges,
+          handleConnections: newConnections,
+        };
       });
     },
     setArgumentConversationHistory: (argumentId: string, history: ConversationEntry[]) => {

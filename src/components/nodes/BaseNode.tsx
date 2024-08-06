@@ -1,6 +1,6 @@
 // src/components/nodes/BaseNode.tsx
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { HandleProps } from 'reactflow';
 import { useStore } from '../../store';
 import { keyframes, NodeHeader, spinnerStyle } from '../shared/styles/nodeStyles';
@@ -17,6 +17,7 @@ interface BaseNodeProps {
   handles: HandleProps[];
   position?: { x: number; y: number };
   initialText?: string;
+  defaultEditing?: boolean;
   onSubmit?: (...args: any[]) => void;
 }
 
@@ -29,22 +30,14 @@ const injectKeyframes = () => {
   }
 };
 
-const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initialText, onSubmit }) => {
-  const [text, setText] = useState(initialText || "");
-  const [editing, setEditing] = useState(true);
+const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initialText = "", defaultEditing = true, onSubmit }) => {
+  const [text, setText] = useState(initialText);
+  const [editing, setEditing] = useState<boolean>(defaultEditing);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [connectedHandles, setConnectedHandles] = useState<string[]>([]);
 
-  const edges = useStore((state) => state.edges);
+  const handleConnections = useStore((state) => state.handleConnections);
   const textAreaRef: React.RefObject<HTMLTextAreaElement> = useRef(null);
-
-  const isHandleConnected = useCallback(
-    (handleId: string) => {
-      return edges.some((edge) => edge.sourceHandle === handleId || edge.targetHandle === handleId);
-    },
-    [edges]
-  );
 
   useEffect(() => {
     const textArea = textAreaRef.current;
@@ -111,8 +104,8 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
           <StyledHandle
             type={handle.type}
             position={handle.position}
-            id={`${id}-${handle.id}`}
-            $isConnected={isHandleConnected(`${id}-${handle.id}`)}
+            id={handle.id}
+            $isConnected={handleConnections[handle.id!]}
           />
           <HandleLabel $position={handle.position}>{handle.id}</HandleLabel>
         </StyledHandleWithLabel>

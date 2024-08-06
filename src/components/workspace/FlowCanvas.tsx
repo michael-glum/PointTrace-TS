@@ -8,14 +8,14 @@ import ReactFlow, {
   MiniMap,
   MarkerType,
   ConnectionLineType,
-  Edge
+  Edge,
+  OnEdgesDelete
 } from 'reactflow';
+import 'reactflow/dist/style.css';
 import { State, useStore } from '../../store';
 import theme from '../../theme';
 import { customNodeStyle } from '../shared/styles/nodeStyles';
 import InputNode from '../nodes/InputNode';
-
-import 'reactflow/dist/style.css';
 import ConclusionNode from '../nodes/ConclusionNode';
 import PremiseNode from '../nodes/PremiseNode';
 import AssumptionNode from '../nodes/AssumptionNode';
@@ -34,6 +34,7 @@ const selector = (state: State) => ({
   edges: state.edges,
   getNodeID: state.getNodeID,
   addNode: state.addNode,
+  removeEdge: state.removeEdge,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
@@ -47,6 +48,7 @@ export const FlowCanvas: React.FC = () => {
     edges,
     getNodeID,
     addNode,
+    removeEdge,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -61,7 +63,6 @@ export const FlowCanvas: React.FC = () => {
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const reactFlowBounds = reactFlowWrapper.current!.getBoundingClientRect();
       const data = event.dataTransfer.getData('application/reactflow')
       if (data) {
         const appData = JSON.parse(data);
@@ -75,9 +76,9 @@ export const FlowCanvas: React.FC = () => {
         const dimensions = nodeStartingDimensions // nodeDimensions[type] || nodeDimensions.default;
   
         // Calculate position adjusted for node dimensions to center it
-        const position = reactFlowInstance!.project({
-          x: event.clientX - reactFlowBounds.left - dimensions.width / 2,
-          y: event.clientY - reactFlowBounds.top - dimensions.height / 2,
+        const position = reactFlowInstance!.screenToFlowPosition({
+          x: event.clientX - dimensions.width / 2,
+          y: event.clientY - dimensions.height / 2,
         });
 
         const nodeID = getNodeID(type);
@@ -100,6 +101,12 @@ export const FlowCanvas: React.FC = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  const onEdgesDelete: OnEdgesDelete = (edgesToRemove: Edge[]) => {
+    edgesToRemove.forEach((edge) => {
+      removeEdge(edge.id);
+    });
+  };
+
   const defaultEdgeOptions: Partial<Edge> = {
     style: { stroke: theme.colors.primary },
     type: ConnectionLineType.SmoothStep,
@@ -116,6 +123,7 @@ export const FlowCanvas: React.FC = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onEdgesDelete={onEdgesDelete}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onInit={setReactFlowInstance}

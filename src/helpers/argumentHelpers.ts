@@ -13,7 +13,7 @@ const NODE_SPACING = 50;
 const LAYER_SPACING = 200;
 
 const createNodesAndEdges = (parsedArguments: ParsedArgument[], argumentId: string, rootPosition: { x: number; y: number}, rootNodeWidth: number, rootNodeId: string) => {
-  const { getNodeID } = useStore.getState();
+  const { getNodeID, addNode, addEdge } = useStore.getState();
 
   const allNodes: Node[] = [];
   const allEdges: Edge[] = [];
@@ -26,7 +26,7 @@ const createNodesAndEdges = (parsedArguments: ParsedArgument[], argumentId: stri
       id,
       type,
       position,
-      data: { text, argumentId },
+      data: { text, argumentId, defaultEditing: false },
       style: customNodeStyle
     };
     allNodes.push(node);
@@ -36,8 +36,8 @@ const createNodesAndEdges = (parsedArguments: ParsedArgument[], argumentId: stri
         id: getNodeID('edge'),
         source: parentId,
         target: id,
-        sourceHandle: 'out',
-        targetHandle: 'in',
+        sourceHandle: `${parentId}-out`,
+        targetHandle: `${id}-in`,
         data: { argumentId },
       };
       allEdges.push(edge);
@@ -53,38 +53,65 @@ const createNodesAndEdges = (parsedArguments: ParsedArgument[], argumentId: stri
 
     const conclusionNode = createNode('conclusion', arg.conclusion, { x: conclusionNodeX, y: rootPosition.y + LAYER_SPACING }, rootNodeId);
 
-    // Calculate the total width of all premise nodes combined plus the node spacing
-    const premiseWidths = arg.premises.map(premise => calculateNodeWidth(premise));
-    const totalPremiseWidth = premiseWidths.reduce((sum, width) => sum + width, 0) + (premiseWidths.length - 1) * NODE_SPACING;
+    // Calculate the total width of all groups of assumption nodes
+    const groupedAssumptionWidths = arg.premises.map((_, premiseIndex) => {
+      const assumptionWidths = arg.assumptions.filter(assumption => assumption.premiseIndex === premiseIndex).map(assumption => calculateNodeWidth(assumption.text));
+      return assumptionWidths.reduce((sum, width) => sum + width, 0) + (assumptionWidths.length - 1) * NODE_SPACING;
+    });
+    const totalAssumptionWidth = groupedAssumptionWidths.reduce((sum, width) => sum + width, 0) + (groupedAssumptionWidths.length - 1) * NODE_SPACING;
 
-    // Center the gap between premise nodes under the conclusion node
-    let currentPremiseX = conclusionNodeX + conclusionNodeWidth / 2 - totalPremiseWidth / 2 + premiseWidths[0] / 2;
+    // Calculate the center position for the entire assumption layer
+    const assumptionLayerCenterX = rootNodeCenterX;
+
+    // Initialize the starting x position for the first group of assumption nodes
+    let currentGroupAssumptionX = assumptionLayerCenterX - totalAssumptionWidth / 2;
+
+    const premisePositions: { x: number, y: number, assumptionPositions: { x: number, y: number, text: string }[], premise: string }[] = [];
 
     arg.premises.forEach((premise, premiseIndex) => {
-      const premiseNode = createNode('premise', premise, { x: currentPremiseX, y: rootPosition.y + 2 * LAYER_SPACING }, conclusionNode.id);
+      // Calculate the total width of the current group of assumption nodes
+      const totalPremiseAssumptionWidth = groupedAssumptionWidths[premiseIndex];
 
-      // Calculate the total width of all assumption nodes for this premise and spacing
-      const assumptionWidths = arg.assumptions.filter(assumption => assumption.premiseIndex === premiseIndex).map(assumption => calculateNodeWidth(assumption.text));
-      const totalAssumptionWidth = assumptionWidths.reduce((sum, width) => sum + width, 0) + (assumptionWidths.length - 1) * NODE_SPACING;
+      // Initialize the starting x position for the assumption nodes under the current premise
+      let currentAssumptionX = currentGroupAssumptionX;
 
-      // Center the gap between assumption nodes under the premise node
-      let currentAssumptionX = currentPremiseX + premiseNode.width / 2 - totalAssumptionWidth / 2 + assumptionWidths[0] / 2;
-      arg.assumptions.filter(assumption => assumption.premiseIndex === premiseIndex).forEach((assumption) => {
-        const assumptionNode = createNode('assumption', assumption.text, { x: currentAssumptionX, y: rootPosition.y + 3 * LAYER_SPACING }, premiseNode.id);
-        currentAssumptionX += assumptionNode.width + NODE_SPACING;
+      // Store positions of the assumption nodes
+      const assumptionPositions = arg.assumptions.filter(assumption => assumption.premiseIndex === premiseIndex).map((assumption) => {
+        const assumptionPosition = { x: currentAssumptionX, y: rootPosition.y + 3 * LAYER_SPACING, text: assumption.text };
+        currentAssumptionX += calculateNodeWidth(assumption.text) + NODE_SPACING;
+        return assumptionPosition;
       });
 
-      currentPremiseX += premiseNode.width + NODE_SPACING;
+      // Calculate the x position of the current premise node to center it above its child assumption nodes
+      const premiseNodeWidth = calculateNodeWidth(premise);
+      const premiseNodeX = currentGroupAssumptionX + totalPremiseAssumptionWidth / 2 - premiseNodeWidth / 2;
+
+      // Store the position of the premise node
+      premisePositions.push({ x: premiseNodeX, y: rootPosition.y + 2 * LAYER_SPACING, assumptionPositions, premise });
+
+      // Move to the next group of assumption nodes
+      currentGroupAssumptionX += totalPremiseAssumptionWidth + NODE_SPACING;
+    });
+
+    // Create nodes and edges
+    premisePositions.forEach(({ x, y, assumptionPositions, premise }) => {
+      const premiseNode = createNode('premise', premise, { x, y }, conclusionNode.id);
+
+      assumptionPositions.forEach(({ x: assumptionX, y: assumptionY, text }) => {
+        createNode('assumption', text, { x: assumptionX, y: assumptionY }, premiseNode.id);
+      });
     });
   });
 
+  allNodes.forEach(node => addNode(node));
+  allEdges.forEach(edge => addEdge(edge));
+
+  // Return values may be used for validation
   return { allNodes, allEdges };
 };
 
 export const initiateArgument = async (input: string, argumentId: string, rootNodeId: string, rootPosition: { x: number; y: number }) => {
   const {
-    addNode,
-    addEdge,
     setArgumentConversationHistory,
   } = useStore.getState();
 
@@ -94,18 +121,16 @@ export const initiateArgument = async (input: string, argumentId: string, rootNo
     const updatedHistory: ConversationEntry[] = [...conversationHistory, { role: 'user', content: makeInputPrompt(input) }];
     const gptResponse = await fetchGPTResponse(updatedHistory);
     const responseContent = gptResponse.choices[0]?.message?.content || 'No response received.';
+    console.log("responseContent:", responseContent);
+
     const updatedHistoryWithResponse: ConversationEntry[] = [...updatedHistory, { role: 'system', content: responseContent }];
 
     const parsedArguments: ParsedArgument[] = parseArgumentResponse(responseContent);
+    console.log("parsedArguments: " + JSON.stringify(parsedArguments));
 
     const rootNodeWidth = calculateNodeWidth(input);
 
-    const { allNodes, allEdges } = createNodesAndEdges(parsedArguments, argumentId, rootPosition, rootNodeWidth, rootNodeId);
-
-    allNodes.forEach(node => addNode(node));
-    setTimeout(() => {
-      allEdges.forEach(edge => addEdge(edge));
-    }, 100);
+    createNodesAndEdges(parsedArguments, argumentId, rootPosition, rootNodeWidth, rootNodeId);
 
     setArgumentConversationHistory(argumentId, updatedHistoryWithResponse);
 
