@@ -2,23 +2,20 @@
 
 import styled from 'styled-components';
 
+export const textContainerBorderWidth = 1;
+
 export const Container = styled.div<{ $editing: boolean }>`
-  border: 1px solid ${({theme, $editing}) => $editing ? theme.colors.secondary : theme.colors.background };
+  border: ${textContainerBorderWidth}px solid ${({theme, $editing}) => $editing ? theme.colors.secondary : theme.colors.background };
   border-radius: ${({theme}) => theme.borderRadius};
   padding: ${({theme}) => theme.spacing.small};
   display: flex;
   flex-direction: column;
+  gap: 1px;
   width: 100%;
   box-sizing: border-box;
 `;
 
 export const Label = styled.div`
-  font-size: 12px;
-  margin-bottom: 1px;
+  font-size: ${({theme}) => theme.typography.fontSizeSmall};
   align-self: flex-start;
-`;
-
-export const Content = styled.div`
-  display: flex;
-  flex-direction: column;
 `;

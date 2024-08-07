@@ -3,11 +3,13 @@
 import styled from 'styled-components';
 import theme from '../../../theme';
 
+export const nodeBorderWidth = 2;
+
 export const customNodeStyle = {
   width: 'auto',
   minWidth: '200px',
   height: 'auto',
-  border: `2px solid ${theme.colors.border}`,
+  border: `${nodeBorderWidth}px solid ${theme.colors.border}`,
   padding: `${theme.spacing.medium}`,
   backgroundColor: `${theme.colors.background}`,
   borderRadius: `${theme.borderRadius}`,
@@ -49,6 +51,7 @@ export const standaloneStyle = {
 };
 
 export const spinnerStyle = {
+  color: `${theme.colors.secondary}`,
   animation: 'spin 1s linear infinite'
 };
 

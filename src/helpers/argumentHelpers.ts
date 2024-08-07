@@ -27,7 +27,7 @@ const createNodesAndEdges = (parsedArguments: ParsedArgument[], argumentId: stri
       type,
       position,
       data: { text, argumentId, defaultEditing: false },
-      style: customNodeStyle
+      style: customNodeStyle,
     };
     allNodes.push(node);
 

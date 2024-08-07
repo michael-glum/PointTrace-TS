@@ -1,5 +1,7 @@
 // src/utils/nodeUtils.ts
 
+import { textContainerBorderWidth } from "../components/shared/styles/labeledBox";
+import { nodeBorderWidth } from "../components/shared/styles/nodeStyles";
 import theme from "../theme";
 
 export const nodeStartingDimensions: { width: number, height: number } = { width: 200, height: 100 };
@@ -25,5 +27,6 @@ const getTextWidth = (text: string): number => {
 }
 
 export const calculateNodeWidth = (text: string): number => {
-  return getTextWidth(text) + parseInt(theme.spacing.medium) + parseInt(theme.spacing.small);
+
+  return getTextWidth(text) + parseInt(theme.spacing.medium) + parseInt(theme.spacing.small) + 2 * nodeBorderWidth + 2 * textContainerBorderWidth;
 };

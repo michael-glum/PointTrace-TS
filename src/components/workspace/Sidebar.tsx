@@ -2,35 +2,37 @@
 
 import React from 'react';
 import { SidebarNode } from './SidebarNode';
+import theme from '../../theme';
+import { FlexColumn } from '../shared/styles/flexColumn';
 
 const Sidebar: React.FC = () => {
   return (
-    <div
+    <FlexColumn
       style={{
         width: '200px',
-        backgroundColor: '#FFFFFF',
         height: '100%',
-        padding: '16px',
-        borderRight: '1px solid #e0e0e0',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        padding: `${theme.spacing.medium}`,
+        paddingTop: '28px',
+        gap: `${theme.spacing.medium}`,
+        borderRight: `1px solid ${theme.colors.secondaryBorder}`,
         justifyContent: 'center',
-        boxSizing: 'border-box'
       }}
     >
-      <div style={{ marginBottom: '16px', textAlign: 'center', fontSize: '18px', fontWeight: '450' }}>Nodes</div>
       <div
         style={{
-          borderTop: '1px solid #e0e0e0',
-          padding: '16px',
+          textAlign: 'center',
+          fontSize: '18px',
+          fontWeight: '450'
+        }}
+      >
+        Nodes
+      </div>
+      <FlexColumn
+        style={{
+          borderTop: `1px solid ${theme.colors.secondaryBorder}`,
+          padding: `${theme.spacing.medium}`,
           width: '100%',
-          height: 'calc(100% - 64px)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '8px',
-          boxSizing: 'border-box',
+          height: '100%',
           overflow: 'hidden'
         }}
       >
@@ -38,8 +40,8 @@ const Sidebar: React.FC = () => {
         <SidebarNode type='conclusion' label="Conclusion" />
         <SidebarNode type='premise' label="Premise" />
         <SidebarNode type='assumption' label="Assumption" />
-      </div>
-    </div>
+      </FlexColumn>
+    </FlexColumn>
   );
 };
 

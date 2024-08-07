@@ -1,7 +1,8 @@
 // src/components/shared/LabeledBox.tsx
 
 import React from 'react';
-import { Container, Label, Content } from './styles/labeledBox';
+import { Container, Label } from './styles/labeledBox';
+import { FlexColumn } from './styles/flexColumn';
 
 interface LabeledBoxProps {
   label: string;
@@ -12,9 +13,9 @@ interface LabeledBoxProps {
 const LabeledBox: React.FC<LabeledBoxProps> = ({ label, children, $editing }) => (
   <Container $editing={$editing}>
     <Label>{label}</Label>
-    <Content>
+    <FlexColumn>
       {children}
-    </Content>
+    </FlexColumn>
   </Container>
 );
 

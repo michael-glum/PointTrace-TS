@@ -95,6 +95,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
                 overflow: 'hidden',
                 whiteSpace: 'pre',
                 fontFamily: `${theme.typography.fontFamily}`,
+                fontSize: `${theme.typography.fontSize}`,
               }}
             />
           </NoBorderWrapper>

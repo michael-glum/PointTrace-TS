@@ -1,4 +1,5 @@
 import React, { CSSProperties, ReactNode } from 'react';
+import theme from '../../theme';
 
 interface CenteredBoxProps {
   style?: CSSProperties;
@@ -33,12 +34,12 @@ const CenteredBox: React.FC<CenteredBoxProps> = ({ children, style }) => {
           width: '100%',
           display: 'flex',
           alignItems: 'center',
-          padding: '0 16px', // Equivalent to Toolbar padding
+          padding: `0 ${theme.spacing.medium}`,
           boxSizing: 'border-box',
         }}
       >
         <CenteredBox style={{ transform: 'translateX(-2%)' }}>
-          {/* Placeholder for BubbleChartIcon */}
+          {/* Placeholder for Icon */}
           <svg
             style={{ marginRight: '8px', width: '24px', height: '24px', fill: 'white' }}
             xmlns="http://www.w3.org/2000/svg"
