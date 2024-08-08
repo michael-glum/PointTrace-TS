@@ -5,6 +5,7 @@ import { customNodeStyle } from "../components/shared/styles/nodeStyles";
 import theme from "../theme";
 
 export const nodeStartingDimensions: { width: number, height: number } = { width: 200, height: 100 };
+const CHARS_BEFORE_WRAP = 60; // For wrapping text in llm generated nodes
 
 /*
   Create a hidden node and its inner textarea for width calculation
@@ -47,3 +48,8 @@ export const calculateNodeWidth = (text: string): number => {
   putHiddenText(text);
   return hiddenNode.offsetWidth;
 };
+
+// Wrap text after CHARS_BEFORE_WRAP characters without breaking words
+export const wrapText = (text: string) => text.replace(
+    new RegExp(`(?![^\\n]{1,${CHARS_BEFORE_WRAP}}$)([^\\n]{1,${CHARS_BEFORE_WRAP}})\\s`, 'g'), '$1\n'
+);

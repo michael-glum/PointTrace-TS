@@ -1,4 +1,5 @@
 import { ParsedArgument } from '../types/argumentTypes';
+import { wrapText } from './nodeUtils';
 
 export const parseArgumentResponse = (responseContent: string): ParsedArgument[] => {
   const lines = responseContent.split('\n').map(line => line.trim()).filter(line => line);
@@ -46,7 +47,7 @@ export const parseArgumentResponse = (responseContent: string): ParsedArgument[]
       addNewArgument(); // Ensure the current argument is saved before starting a new one
     } else if (line.startsWith(SECTION_KEYS.CONCLUSION)) {
       currentSection = 'conclusion';
-      currentArgument!.conclusion = line.replace(SECTION_KEYS.CONCLUSION, '').trim();
+      currentArgument!.conclusion = wrapText(line.replace(SECTION_KEYS.CONCLUSION, '').trim());
     } else if (line.startsWith(SECTION_KEYS.PREMISES)) {
       currentSection = 'premises';
     } else if (line.startsWith(SECTION_KEYS.ASSUMPTIONS)) {
@@ -61,9 +62,9 @@ export const parseArgumentResponse = (responseContent: string): ParsedArgument[]
       const content = line.replace('- ', '').trim();
       const premiseIndex = extractPremiseIndex(content);
       if (currentSection === 'premises') {
-        currentArgument!.premises.push(content);
+        currentArgument!.premises.push(wrapText(content));
       } else if (currentSection === 'assumptions') {
-        currentArgument!.assumptions.push({ text: content, premiseIndex });
+        currentArgument!.assumptions.push({ text: wrapText(content), premiseIndex });
       }
     }
   });

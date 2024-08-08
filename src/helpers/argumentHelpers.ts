@@ -12,7 +12,7 @@ import { calculateNodeWidth } from '../utils/nodeUtils';
 const NODE_SPACING = 50;
 const LAYER_SPACING = 200;
 
-const createNodesAndEdges = (parsedArguments: ParsedArgument[], argumentId: string, rootPosition: { x: number; y: number}, rootNodeWidth: number, rootNodeId: string) => {
+const createNodesAndEdges = (parsedArguments: ParsedArgument[], argumentId: string, rootPosition: { x: number; y: number}, rootNodeId: string) => {
   const { getNodeID, addNode, addEdge } = useStore.getState();
 
   const allNodes: Node[] = [];
@@ -123,21 +123,15 @@ export const initiateArgument = async (input: string, argumentId: string, rootNo
     const updatedHistory: ConversationEntry[] = [...conversationHistory, { role: 'user', content: makeInputPrompt(input) }];
     const gptResponse = await fetchGPTResponse(updatedHistory);
     const responseContent = gptResponse.choices[0]?.message?.content || 'No response received.';
-    //console.log("responseContent:", responseContent);
+    console.log("responseContent:", responseContent);
 
     const updatedHistoryWithResponse: ConversationEntry[] = [...updatedHistory, { role: 'system', content: responseContent }];
 
     const parsedArguments: ParsedArgument[] = parseArgumentResponse(responseContent);
-    //console.log("parsedArguments: " + JSON.stringify(parsedArguments));
+    console.log("parsedArguments: " + JSON.stringify(parsedArguments));
 
-    const rootNodeWidth = calculateNodeWidth(input);
-    console.log(`${rootPosition.x} is x-position of ${rootNodeId}`);
-    console.log(`${rootNodeWidth} is width of ${rootNodeId}`);
-
-    createNodesAndEdges(parsedArguments, argumentId, rootPosition, rootNodeWidth, rootNodeId);
-
+    createNodesAndEdges(parsedArguments, argumentId, rootPosition, rootNodeId);
     setArgumentConversationHistory(argumentId, updatedHistoryWithResponse);
-
   } catch (error) {
     console.error("Error fetching GPT response:", error);
   }
