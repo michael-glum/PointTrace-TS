@@ -70,7 +70,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
   };
 
   return (
-    <>
+    <FlexColumn style={{gap: `${theme.spacing.medium}`}}>
       <NodeHeader>
         <span>{label}</span>
         <button
@@ -112,7 +112,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
         </StyledHandleWithLabel>
         ))}
       </FlexColumn>
-    </>
+    </FlexColumn>
   );
 }
 

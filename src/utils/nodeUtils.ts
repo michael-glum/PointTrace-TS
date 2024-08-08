@@ -1,32 +1,49 @@
 // src/utils/nodeUtils.ts
 
-import { textContainerBorderWidth } from "../components/shared/styles/labeledBox";
-import { nodeBorderWidth } from "../components/shared/styles/nodeStyles";
+import { labeledBoxContainerBorderWidth, labeledBoxContainerPadding } from "../components/shared/styles/labeledBox";
+import { customNodeStyle } from "../components/shared/styles/nodeStyles";
 import theme from "../theme";
 
 export const nodeStartingDimensions: { width: number, height: number } = { width: 200, height: 100 };
 
-const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
-if (context) {
-  context.font = `${theme.typography.fontSize} ${theme.typography.fontFamily}`;
-}
+/*
+  Create a hidden node and its inner textarea for width calculation
 
-const getTextWidth = (text: string): number => {
-  if (!context) return 0;
+  The elements are created in the module scope, so they are initialized only once when the module is
+  first imported. Therefore, they won't be repeatedly created and destroyed every time calculateNodeWidth
+  is called. Additionally, they are positioned off-screen and set to be invisible to ensure they do not
+  interfere with the layout or rendering of the visible parts of the application.
+*/
+const hiddenNode = document.createElement('div');
+Object.assign(hiddenNode.style, customNodeStyle);
+hiddenNode.style.position = 'absolute';
+hiddenNode.style.left = '-9999px';
+hiddenNode.style.top = '-9999px';
+hiddenNode.style.visibility = 'hidden';
 
-  const lines = text.split('\n');
-  let maxWidth = 0;
 
-  lines.forEach(line => {
-    const width = context.measureText(line).width;
-    maxWidth = Math.max(maxWidth, width);
-  });
+const hiddenTextArea = document.createElement('textarea');
+Object.assign(hiddenTextArea.style, {
+  visibility: 'hidden',
+  whiteSpace: 'pre',
+  fontSize: theme.typography.fontSize,
+  fontFamily: theme.typography.fontFamily,
+  padding: `${labeledBoxContainerPadding}`,
+  borderWidth: `${labeledBoxContainerBorderWidth}`,
+  overflow: 'hidden',
+});
 
-  return maxWidth;
+hiddenNode.appendChild(hiddenTextArea);
+document.body.appendChild(hiddenNode)
+
+// Replace the text in the hiddenTextArea and update its width
+const putHiddenText = (text: string) => {
+  hiddenTextArea.value = text;
+  hiddenTextArea.style.width = 'auto'; // Reset width to auto to accurately measure new content
+  hiddenTextArea.style.width = `${hiddenTextArea.scrollWidth}px`; // Set width based on scrollWidth
 }
 
 export const calculateNodeWidth = (text: string): number => {
-
-  return getTextWidth(text) + parseInt(theme.spacing.medium) + parseInt(theme.spacing.small) + 2 * nodeBorderWidth + 2 * textContainerBorderWidth;
+  putHiddenText(text);
+  return hiddenNode.offsetWidth;
 };

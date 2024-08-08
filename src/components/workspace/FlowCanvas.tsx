@@ -9,7 +9,8 @@ import ReactFlow, {
   MarkerType,
   ConnectionLineType,
   Edge,
-  OnEdgesDelete
+  OnEdgesDelete,
+  NodeOrigin
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { State, useStore } from '../../store';
@@ -19,8 +20,9 @@ import InputNode from '../nodes/InputNode';
 import ConclusionNode from '../nodes/ConclusionNode';
 import PremiseNode from '../nodes/PremiseNode';
 import AssumptionNode from '../nodes/AssumptionNode';
-import { nodeStartingDimensions } from '../../utils/nodeUtils';
 
+// Place the node origin in the center of a node
+const nodeOrigin: NodeOrigin = [0.5, 0.5];
 const gridSize = 20;
 const nodeTypes = {
   input: InputNode,
@@ -72,13 +74,9 @@ export const FlowCanvas: React.FC = () => {
           return;
         }
 
-        // Get default node dimensions
-        const dimensions = nodeStartingDimensions // nodeDimensions[type] || nodeDimensions.default;
-  
-        // Calculate position adjusted for node dimensions to center it
         const position = reactFlowInstance!.screenToFlowPosition({
-          x: event.clientX - dimensions.width / 2,
-          y: event.clientY - dimensions.height / 2,
+          x: event.clientX,
+          y: event.clientY,
         });
 
         const nodeID = getNodeID(type);
@@ -127,6 +125,7 @@ export const FlowCanvas: React.FC = () => {
         onDrop={onDrop}
         onDragOver={onDragOver}
         onInit={setReactFlowInstance}
+        nodeOrigin={nodeOrigin}
         nodeTypes={nodeTypes}
         snapGrid={[gridSize, gridSize]}
         connectionLineType={ConnectionLineType.SmoothStep}

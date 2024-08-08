@@ -71,7 +71,7 @@ export const useStore = createWithEqualityFn<State>(
         const newEdges = [...state.edges, edge];
         const newConnections = { ...state.handleConnections };
 
-        // Update handle connections, ensuring handleId is defined
+        // Update handle connections
         if (edge.sourceHandle) {
           newConnections[edge.sourceHandle] = true;
         }
@@ -93,7 +93,7 @@ export const useStore = createWithEqualityFn<State>(
         const newEdges = state.edges.filter(e => e.id !== edgeId);
         const newConnections = { ...state.handleConnections };
 
-        // Update handle connections, ensuring handleId is defined
+        // Update handle connections
         if (edge.sourceHandle) {
           newConnections[edge.sourceHandle] = newEdges.some(e => e.sourceHandle === edge.sourceHandle || e.targetHandle === edge.sourceHandle);
         }
@@ -132,7 +132,7 @@ export const useStore = createWithEqualityFn<State>(
         const newEdges = addEdge({ ...connection }, state.edges);
         const newConnections = { ...state.handleConnections };
 
-        // Update handle connections, ensuring handleId is defined
+        // Update handle connections
         if (connection.sourceHandle) {
           newConnections[connection.sourceHandle] = true;
         }

@@ -1,13 +1,15 @@
 // src/components/shared/styles/labeledBox.js
 
 import styled from 'styled-components';
+import theme from '../../../theme';
 
-export const textContainerBorderWidth = 1;
+export const labeledBoxContainerBorderWidth = 1;
+export const labeledBoxContainerPadding = theme.spacing.small;
 
 export const Container = styled.div<{ $editing: boolean }>`
-  border: ${textContainerBorderWidth}px solid ${({theme, $editing}) => $editing ? theme.colors.secondary : theme.colors.background };
+  border: ${labeledBoxContainerBorderWidth}px solid ${({theme, $editing}) => $editing ? theme.colors.secondary : theme.colors.background };
   border-radius: ${({theme}) => theme.borderRadius};
-  padding: ${({theme}) => theme.spacing.small};
+  padding: ${labeledBoxContainerPadding};
   display: flex;
   flex-direction: column;
   gap: 1px;
