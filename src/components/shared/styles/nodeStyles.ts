@@ -14,7 +14,7 @@ export const customNodeStyle = {
   color: `${theme.colors.text}`,
   boxShadow: `0 4px 8px rgba(0, 0, 0, 0.1)`,
   fontFamily: `${theme.typography.fontFamily}`,
-  gap: `${theme.spacing.medium}`
+  gap: `${theme.spacing.medium}`,
 };
 
 export const NodeHeader = styled.div`

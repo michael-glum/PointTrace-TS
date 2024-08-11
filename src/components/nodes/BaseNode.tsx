@@ -44,7 +44,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
     if (textArea) {
       textArea.style.height = 'auto';
       textArea.style.height = `${textArea.scrollHeight}px`;
-
+  
       textArea.style.width = 'auto';
       textArea.style.width = `${textArea.scrollWidth}px`;
     }
@@ -64,6 +64,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
         setError('Failed to submit');
       } finally {
         setLoading(false);
+
       }
     }
     setEditing(!editing);

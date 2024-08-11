@@ -37,6 +37,8 @@ export interface State {
   addEdge: (edge: Edge) => void;
   removeEdge: (edgeId: string) => void;
   updateNodeField: (nodeId: string, fieldName: string, fieldValue: any) => void;
+  addNodeStyle: (nodeId: string, styleField: any, styleValue: any) => void;
+  setNodePosition: (nodeId: string, position: { x: number, y: number }) => void;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
@@ -116,6 +118,29 @@ export const useStore = createWithEqualityFn<State>(
           return node;
         })
       })
+    },
+    addNodeStyle: (nodeId: string, styleField: any, styleValue: any) => {
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId) {
+            node.style = { ...node.style, [styleField]: styleValue };
+          }
+          return node;
+        })
+      })
+    },
+    setNodePosition: (nodeId: string, position: { x: number, y: number }) => {
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId) {
+            return {
+              ...node,
+              position: position, // Update position directly on the node object
+            };
+          }
+          return node;
+        }),
+      });
     },
     onNodesChange: (changes: NodeChange[]) => {
       set({

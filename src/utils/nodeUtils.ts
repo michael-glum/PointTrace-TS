@@ -42,11 +42,13 @@ const putHiddenText = (text: string) => {
   hiddenTextArea.value = text;
   hiddenTextArea.style.width = 'auto'; // Reset width to auto to accurately measure new content
   hiddenTextArea.style.width = `${hiddenTextArea.scrollWidth}px`; // Set width based on scrollWidth
+  hiddenTextArea.style.height = 'auto';
+  hiddenTextArea.style.height = `${hiddenTextArea.scrollHeight}px`;
 }
 
-export const calculateNodeWidth = (text: string): number => {
-  putHiddenText(text);
-  return hiddenNode.offsetWidth;
+export const calculateNodeDimensions = (text: string): { width: number, height: number } => {
+  putHiddenText(wrapText(text));
+  return { width: hiddenNode.offsetWidth, height: hiddenNode.offsetHeight };
 };
 
 // Wrap text after CHARS_BEFORE_WRAP characters without breaking words

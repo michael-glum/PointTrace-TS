@@ -7,9 +7,9 @@ import { initiateArgument } from '../../helpers/argumentHelpers';
 
 
 const InputNode: React.FC<NodeProps> = ({ id, xPos, yPos }) => {
-  const handleSubmit = async (nodeId: string, input: string, options: { position: { x: number; y: number } }) => {
+  const handleSubmit = async (nodeId: string, input: string) => {
     const argumentId = `argument-${id}`; // This should be generated or fetched appropriately
-    await initiateArgument(input, argumentId, nodeId, options.position);
+    await initiateArgument(input, argumentId, nodeId);
   };
 
   return (

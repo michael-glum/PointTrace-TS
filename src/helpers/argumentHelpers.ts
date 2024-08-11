@@ -7,112 +7,135 @@ import { parseArgumentResponse } from '../utils/parseArgumentResponse';
 import { ParsedArgument, ConversationEntry } from '../types/argumentTypes';
 import { Node, Edge } from 'reactflow';
 import { customNodeStyle } from '../components/shared/styles/nodeStyles';
-import { calculateNodeWidth } from '../utils/nodeUtils';
+import { performElkLayout } from '../utils/elkLayout';
+import { nodeStartingDimensions } from '../utils/nodeUtils';
 
-const NODE_SPACING = 50;
-const LAYER_SPACING = 200;
-
-const createNodesAndEdges = (parsedArguments: ParsedArgument[], argumentId: string, rootPosition: { x: number; y: number}, rootNodeId: string) => {
+const createNodesAndEdges = async (
+  parsedArguments: ParsedArgument[],
+  argumentId: string,
+  rootNodeId: string,
+) => {
   const { getNodeID, addNode, addEdge } = useStore.getState();
 
   const allNodes: Node[] = [];
   const allEdges: Edge[] = [];
 
-  const createNode = (type: string, text: string, position: { x: number; y: number }, parentId: string | null = null): { id: string } => {
-    const id = getNodeID(type);
-
-    const node: Node = {
-      id,
-      type,
-      position,
-      data: { text, argumentId, defaultEditing: false },
-      style: customNodeStyle,
-    };
-    allNodes.push(node);
-
-    if (parentId) {
-      const edge: Edge = {
-        id: getNodeID('edge'),
-        source: parentId,
-        target: id,
-        sourceHandle: `${parentId}-out`,
-        targetHandle: `${id}-in`,
-        data: { argumentId },
-      };
-      allEdges.push(edge);
-    }
-
-    return { id };
-  };
+  const rootNode = useStore.getState().nodes.find((node: Node) => node.id === rootNodeId);
+  allNodes.push(rootNode!);
 
   parsedArguments.forEach((arg) => {
-    // Create a conclusion node centered under the root node
-    const conclusionNode = createNode('conclusion', arg.conclusion, { x: rootPosition.x, y: rootPosition.y + LAYER_SPACING }, rootNodeId);
+    const conclusionNode = {
+      id: getNodeID('conclusion'),
+      type: 'conclusion',
+      position: { x: 0, y: 0 }, // Position will be set by Elkjs
+      data: {
+        text: arg.conclusion,
+        argumentId,
+        defaultEditing: false,
+        size: {
+          width: nodeStartingDimensions.width,
+          height: nodeStartingDimensions.height
+        }, // Initialize size with default values
+      },
+      style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
+    };
+    allNodes.push(conclusionNode);
 
-    // Memoize the widths of all assumption nodes
-    const memoizedAssumptionWidths: { [key: string]: number } = arg.assumptions.reduce((acc: { [key: string]: number }, assumption) => {
-      acc[assumption.text] = calculateNodeWidth(assumption.text);
-      return acc;
-    }, {});
-
-    // Find the total width of all groups of assumption nodes
-    const groupedAssumptionWidths = arg.premises.map((_, premiseIndex) => {
-      const assumptionWidths = arg.assumptions.filter(assumption => assumption.premiseIndex === premiseIndex).map(assumption => memoizedAssumptionWidths[assumption.text]);
-      return assumptionWidths.reduce((sum, width) => sum + width, 0) + (assumptionWidths.length - 1) * NODE_SPACING;
+    allEdges.push({
+      id: getNodeID('edge'),
+      source: rootNodeId,
+      target: conclusionNode.id,
+      sourceHandle: `${rootNodeId}-out`,
+      targetHandle: `${conclusionNode.id}-in`,
+      data: { argumentId },
     });
-    const totalAssumptionWidth = groupedAssumptionWidths.reduce((sum, width) => sum + width, 0) + (groupedAssumptionWidths.length - 1) * NODE_SPACING;
-
-    // Calculate the center position for the entire assumption layer
-    const assumptionLayerCenterX = rootPosition.x;
-
-    // Initialize the starting x position for the first group of assumption nodes
-    let currentGroupAssumptionX = assumptionLayerCenterX - totalAssumptionWidth / 2;
-
-    const premisePositions: { x: number, y: number, assumptionPositions: { x: number, y: number, text: string }[], premise: string }[] = [];
 
     arg.premises.forEach((premise, premiseIndex) => {
-      // Get the total width of the current group of assumption nodes
-      const totalPremiseAssumptionWidth = groupedAssumptionWidths[premiseIndex];
+      const premiseNode = {
+        id: getNodeID('premise'),
+        type: 'premise',
+        position: { x: 0, y: 0 },  // Position will be set by Elkjs
+        data: {
+          text: premise,
+          argumentId,
+          defaultEditing: false,
+          size: {
+            width: nodeStartingDimensions.width,
+            height: nodeStartingDimensions.height
+          }, // Initialize size with default values
+        },
+        style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
+      };
+      allNodes.push(premiseNode);
 
-      // Initialize the starting x position for the assumption nodes under the current premise
-      let currentAssumptionX = currentGroupAssumptionX;
-
-      // Store positions of the assumption nodes
-      const assumptionPositions = arg.assumptions.filter(assumption => assumption.premiseIndex === premiseIndex).map((assumption) => {
-        const assumptionWidth = memoizedAssumptionWidths[assumption.text];
-        const assumptionPosition = { x: currentAssumptionX + assumptionWidth / 2, y: rootPosition.y + 3 * LAYER_SPACING, text: assumption.text };
-        currentAssumptionX += assumptionWidth + NODE_SPACING;
-        return assumptionPosition;
+      allEdges.push({
+        id: getNodeID('edge'),
+        source: conclusionNode.id,
+        target: premiseNode.id,
+        sourceHandle: `${conclusionNode.id}-out`,
+        targetHandle: `${premiseNode.id}-in`,
+        data: { argumentId },
       });
 
-      // Calculate the x position of the current premise node to center it above its child assumption nodes
-      const premiseNodeX = currentGroupAssumptionX + totalPremiseAssumptionWidth / 2;
+      arg.assumptions
+        .filter(assumption => assumption.premiseIndex === premiseIndex)
+        .forEach(assumption => {
+          const assumptionNode = {
+            id: getNodeID('assumption'),
+            type: 'assumption',
+            position: { x: 0, y: 0 },  // Position will be set by Elkjs
+            data: {
+              text: assumption.text,
+              argumentId,
+              defaultEditing: false,
+              size: {
+                width: nodeStartingDimensions.width,
+                height: nodeStartingDimensions.height
+              }, // Initialize size with default values
+            },
+            style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
+          };
+          allNodes.push(assumptionNode);
 
-      // Store the position of the premise node
-      premisePositions.push({ x: premiseNodeX, y: rootPosition.y + 2 * LAYER_SPACING, assumptionPositions, premise });
-
-      // Move to the next group of assumption nodes
-      currentGroupAssumptionX += totalPremiseAssumptionWidth + NODE_SPACING;
-    });
-
-    // Create nodes and edges
-    premisePositions.forEach(({ x, y, assumptionPositions, premise }) => {
-      const premiseNode = createNode('premise', premise, { x, y }, conclusionNode.id);
-
-      assumptionPositions.forEach(({ x: assumptionX, y: assumptionY, text }) => {
-        createNode('assumption', text, { x: assumptionX, y: assumptionY }, premiseNode.id);
-      });
+          allEdges.push({
+            id: getNodeID('edge'),
+            source: premiseNode.id,
+            target: assumptionNode.id,
+            sourceHandle: `${premiseNode.id}-out`,
+            targetHandle: `${assumptionNode.id}-in`,
+            data: { argumentId },
+          });
+        });
     });
   });
 
-  allNodes.forEach(node => addNode(node));
-  allEdges.forEach(edge => addEdge(edge));
+  // Add new nodes and edges to the store
+  allNodes.forEach((node) => {
+    if (node.id !== rootNodeId) addNode(node)
+  });
 
-  // Return values may be used for validation
-  return { allNodes, allEdges };
+  // Measure sizes and update the store
+  setTimeout(async () => {
+    // Perform the layout
+    const updatedNodes = await performElkLayout({ nodes: useStore.getState().nodes, edges: allEdges }, rootNodeId, argumentId);
+
+    // Apply positions after ensuring DOM is ready
+    requestAnimationFrame(() => {
+      updatedNodes.forEach((updatedNode) => {
+        if (updatedNode.id !== rootNodeId) {
+          useStore.getState().setNodePosition(updatedNode.id, updatedNode.position);
+          useStore.getState().addNodeStyle(updatedNode.id, 'visibility', 'visible' );
+        }
+      });
+    });
+
+    // Now that the nodes have been positioned, add the edges
+    allEdges.forEach((edge) => addEdge(edge));
+
+  }, 0); // Timeout ensures DOM updates are completed
 };
 
-export const initiateArgument = async (input: string, argumentId: string, rootNodeId: string, rootPosition: { x: number; y: number }) => {
+export const initiateArgument = async (input: string, argumentId: string, rootNodeId: string) => {
   const {
     setArgumentConversationHistory,
   } = useStore.getState();
@@ -130,7 +153,7 @@ export const initiateArgument = async (input: string, argumentId: string, rootNo
     const parsedArguments: ParsedArgument[] = parseArgumentResponse(responseContent);
     console.log("parsedArguments: " + JSON.stringify(parsedArguments));
 
-    createNodesAndEdges(parsedArguments, argumentId, rootPosition, rootNodeId);
+    createNodesAndEdges(parsedArguments, argumentId, rootNodeId);
     setArgumentConversationHistory(argumentId, updatedHistoryWithResponse);
   } catch (error) {
     console.error("Error fetching GPT response:", error);
