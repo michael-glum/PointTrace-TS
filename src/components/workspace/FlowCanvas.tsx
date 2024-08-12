@@ -1,6 +1,6 @@
 // src/components/workspace/FlowCanvas.tsx
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import ReactFlow, {
   ReactFlowInstance,
   Controls,
@@ -22,17 +22,12 @@ import AssumptionNode from '../nodes/AssumptionNode';
 import { nodeStartingDimensions } from '../../utils/nodeUtils';
 
 const gridSize = 20;
-const nodeTypes = {
-  input: InputNode,
-  conclusion: ConclusionNode,
-  premise: PremiseNode,
-  assumption: AssumptionNode,
-};
 
 const selector = (state: State) => ({
   nodes: state.nodes,
   edges: state.edges,
   getNodeID: state.getNodeID,
+  getNodeNumber: state.getNodeNumber,
   addNode: state.addNode,
   removeEdge: state.removeEdge,
   onNodesChange: state.onNodesChange,
@@ -47,6 +42,7 @@ export const FlowCanvas: React.FC = () => {
     nodes,
     edges,
     getNodeID,
+    getNodeNumber,
     addNode,
     removeEdge,
     onNodesChange,
@@ -54,20 +50,27 @@ export const FlowCanvas: React.FC = () => {
     onConnect,
   } = useStore(selector);
 
-  const getInitNodeData = (nodeID: string, type: string) => {
-    const nodeData = { id: nodeID, nodeType: `${type}` };
+  const nodeTypes = useMemo(() => ({
+    input: InputNode,
+    conclusion: ConclusionNode,
+    premise: PremiseNode,
+    assumption: AssumptionNode,
+  }), []);
+
+  const getInitNodeData = useCallback((nodeID: string, type: string, nodeNumber: string) => {
+    const nodeData = { id: nodeID, nodeType: type, nodeNumber: nodeNumber };
     return nodeData;
-  }
+  }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const data = event.dataTransfer.getData('application/reactflow')
+      const data = event.dataTransfer.getData('application/reactflow');
       if (data) {
         const appData = JSON.parse(data);
         const type = appData?.nodeType;
-  
+
         if (typeof type === 'undefined' || !type) {
           return;
         }
@@ -80,18 +83,19 @@ export const FlowCanvas: React.FC = () => {
         });
 
         const nodeID = getNodeID(type);
+        const nodeNumber = getNodeNumber(type);
         const newNode = {
           id: nodeID,
           type,
           position,
-          data: getInitNodeData(nodeID, type),
+          data: getInitNodeData(nodeID, type, nodeNumber),
           style: customNodeStyle
         };
 
         addNode(newNode);
       }
     },
-    [reactFlowInstance, getNodeID, addNode]
+    [reactFlowInstance, getNodeID, getNodeNumber, addNode, getInitNodeData]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -99,18 +103,20 @@ export const FlowCanvas: React.FC = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onEdgesDelete: OnEdgesDelete = (edgesToRemove: Edge[]) => {
+  const onEdgesDelete: OnEdgesDelete = useCallback((edgesToRemove: Edge[]) => {
     edgesToRemove.forEach((edge) => {
       removeEdge(edge.id);
     });
-  };
+  }, [removeEdge]);
 
-  const defaultEdgeOptions: Partial<Edge> = {
-    style: { stroke: theme.colors.primary },
+  const edgeStrokeColor = theme.colors.primary;
+
+  const defaultEdgeOptions: Partial<Edge> = useMemo(() => ({
+    style: { stroke: edgeStrokeColor },
     type: ConnectionLineType.SmoothStep,
     animated: true,
-    markerEnd: { type: MarkerType.Arrow, height: 20, width: 20, color: theme.colors.primary },
-  };
+    markerEnd: { type: MarkerType.Arrow, height: 20, width: 20, color: edgeStrokeColor },
+  }), [edgeStrokeColor]);
 
   return (
     <div ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }}>
@@ -135,5 +141,5 @@ export const FlowCanvas: React.FC = () => {
         <MiniMap />
       </ReactFlow>
     </div>
-  )
+  );
 }

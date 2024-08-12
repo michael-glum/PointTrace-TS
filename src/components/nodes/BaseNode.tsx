@@ -42,9 +42,27 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
   useEffect(() => {
     const textArea = textAreaRef.current;
     if (textArea) {
+      // Run the initial dimension calculations after a short delay to ensure DOM is ready.
+      // Otherwise some text in generated nodes may be cut off
+      // TODO: Find a better way to ensure text in generated nodes is displayed in full on first render. Low importance.
+      setTimeout(() => {
+        textArea.style.height = 'auto';
+        textArea.style.height = `${textArea.scrollHeight}px`;
+
+        textArea.style.width = 'auto';
+        textArea.style.width = `${textArea.scrollWidth}px`;
+      }, 100);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    const textArea = textAreaRef.current;
+    if (textArea) {
+      // Recalculation after the component mounts
       textArea.style.height = 'auto';
       textArea.style.height = `${textArea.scrollHeight}px`;
-  
+
       textArea.style.width = 'auto';
       textArea.style.width = `${textArea.scrollWidth}px`;
     }
@@ -64,7 +82,6 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
         setError('Failed to submit');
       } finally {
         setLoading(false);
-
       }
     }
     setEditing(!editing);

@@ -64,7 +64,7 @@ export const parseArgumentResponse = (responseContent: string): ParsedArgument[]
       if (currentSection === 'premises') {
         currentArgument!.premises.push(wrapText(content));
       } else if (currentSection === 'assumptions') {
-        currentArgument!.assumptions.push({ text: wrapText(content), premiseIndex });
+        currentArgument!.assumptions.push({ text: wrapText(content.slice(0, content.lastIndexOf('(Premise #'))), premiseIndex });
       }
     }
   });

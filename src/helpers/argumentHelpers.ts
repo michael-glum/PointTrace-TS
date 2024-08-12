@@ -15,7 +15,7 @@ const createNodesAndEdges = async (
   argumentId: string,
   rootNodeId: string,
 ) => {
-  const { getNodeID, addNode, addEdge } = useStore.getState();
+  const { getNodeID, getNodeNumber, addNode, addEdge } = useStore.getState();
 
   const allNodes: Node[] = [];
   const allEdges: Edge[] = [];
@@ -36,6 +36,7 @@ const createNodesAndEdges = async (
           width: nodeStartingDimensions.width,
           height: nodeStartingDimensions.height
         }, // Initialize size with default values
+        nodeNumber: getNodeNumber('conclusion'),
       },
       style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
     };
@@ -63,6 +64,7 @@ const createNodesAndEdges = async (
             width: nodeStartingDimensions.width,
             height: nodeStartingDimensions.height
           }, // Initialize size with default values
+          nodeNumber: getNodeNumber('premise'),
         },
         style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
       };
@@ -92,6 +94,7 @@ const createNodesAndEdges = async (
                 width: nodeStartingDimensions.width,
                 height: nodeStartingDimensions.height
               }, // Initialize size with default values
+              nodeNumber: getNodeNumber('assumption'),
             },
             style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
           };

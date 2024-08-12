@@ -9,7 +9,7 @@ const ConclusionNode: React.FC<NodeProps> = ({ id, data }) => {
   return (
     <BaseNode
       id={id}
-      label={"Conclusion"}
+      label={`Conclusion ${data.nodeNumber}`}
       initialText={data.text}
       defaultEditing={data.defaultEditing}
       handles={[

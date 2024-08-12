@@ -9,7 +9,7 @@ const AssumptionNode: React.FC<NodeProps> = ({ id, data }) => {
   return (
     <BaseNode
       id={id}
-      label={"Assumption"}
+      label={`Assumption ${data.nodeNumber}`}
       initialText={data.text}
       defaultEditing={data.defaultEditing}
       handles={[

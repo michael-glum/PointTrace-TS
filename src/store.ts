@@ -33,6 +33,7 @@ export interface State {
   nodeIDs: { [type: string]: NodeIDInfo };
   arguments: { [type: string]: ArgumentState };
   getNodeID: (type: string) => string;
+  getNodeNumber: (type: string) => string;
   addNode: (node: Node) => void;
   addEdge: (edge: Edge) => void;
   removeEdge: (edgeId: string) => void;
@@ -62,6 +63,9 @@ export const useStore = createWithEqualityFn<State>(
       newIDs[type].count += 1;
       set({ nodeIDs: newIDs });
       return `${type}-${newIDs[type].count}`;
+    },
+    getNodeNumber: (type: string) => {
+      return `${{...get().nodeIDs}[type].count}`;
     },
     addNode: (node: Node) => {
       set({

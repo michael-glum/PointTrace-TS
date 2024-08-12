@@ -6,16 +6,16 @@ import { Position, NodeProps } from 'reactflow';
 import { initiateArgument } from '../../helpers/argumentHelpers';
 
 
-const InputNode: React.FC<NodeProps> = ({ id, xPos, yPos }) => {
+const InputNode: React.FC<NodeProps> = ({ id, xPos, yPos, data }) => {
   const handleSubmit = async (nodeId: string, input: string) => {
-    const argumentId = `argument-${id}`; // This should be generated or fetched appropriately
+    const argumentId = `argument-${id}`;
     await initiateArgument(input, argumentId, nodeId);
   };
 
   return (
     <BaseNode
       id={id}
-      label={"Input"}
+      label={`Input ${data.nodeNumber}`}
       handles={[
         { type: 'source', position: Position.Bottom, id: `${id}-out` }
       ]}

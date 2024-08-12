@@ -9,7 +9,7 @@ const PremiseNode: React.FC<NodeProps> = ({ id, data }) => {
   return (
     <BaseNode
       id={id}
-      label={"Premise"}
+      label={`Premise ${data.nodeNumber}`}
       initialText={data.text}
       defaultEditing={data.defaultEditing}
       handles={[
