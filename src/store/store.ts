@@ -8,11 +8,10 @@ import {
   NodeChange,
   EdgeChange,
   Connection,
-  addEdge,
   applyNodeChanges,
   applyEdgeChanges,
 } from 'reactflow';
-import { ConversationEntry } from './types/argumentTypes';
+import { ConversationEntry } from '../types/argumentTypes';
 
 interface NodeIDInfo {
   count: number;
@@ -83,6 +82,14 @@ export const useStore = createWithEqualityFn<State>(
         }
         if (edge.targetHandle) {
           newConnections[edge.targetHandle] = true;
+        }
+
+        // Find the target node and set its parentNode
+        // TODO: assign this elsewhere to prevent having to iterate through nodes[] every time
+        const targetNodeIndex = state.nodes.findIndex(node => node.id === edge.target);
+        console.log(targetNodeIndex);
+        if (targetNodeIndex !== -1) {
+          state.nodes[targetNodeIndex].parentId = edge.source; // Assign the parent node directly
         }
 
         return {
@@ -158,21 +165,18 @@ export const useStore = createWithEqualityFn<State>(
     },
     onConnect: (connection: Connection) => {
       set(state => {
-        const newEdges = addEdge({ ...connection }, state.edges);
-        const newConnections = { ...state.handleConnections };
-
-        // Update handle connections
-        if (connection.sourceHandle) {
-          newConnections[connection.sourceHandle] = true;
-        }
-        if (connection.targetHandle) {
-          newConnections[connection.targetHandle] = true;
-        }
-
-        return {
-          edges: newEdges,
-          handleConnections: newConnections,
+        // Convert Connection object to an Edge object
+        const edge: Edge = {
+          id: get().getNodeID("edge"), // Use get() to access the state and generate an ID
+          source: connection.source!,
+          target: connection.target!,
+          sourceHandle: connection.sourceHandle,
+          targetHandle: connection.targetHandle,
         };
+    
+        state.addEdge(edge);
+    
+        return {}; // Return an empty object since addEdge already handles state updates
       });
     },
     setArgumentConversationHistory: (argumentId: string, history: ConversationEntry[]) => {

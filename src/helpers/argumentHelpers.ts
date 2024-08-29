@@ -1,14 +1,14 @@
 // src/helpers/argumentHelpers.ts
 
-import { useStore } from '../store';
+import { useStore } from '../store/store';
 import { makeInputPrompt } from '../utils/promptUtils';
 import { fetchGPTResponse } from '../services/openai';
 import { parseArgumentResponse } from '../utils/parseArgumentResponse';
 import { ParsedArgument, ConversationEntry } from '../types/argumentTypes';
 import { Node, Edge } from 'reactflow';
 import { customNodeStyle } from '../components/shared/styles/nodeStyles';
-import { performElkLayout } from '../utils/elkLayout';
 import { nodeStartingDimensions } from '../utils/nodeUtils';
+import { createAutoLayout } from '../utils/autoLayout';
 
 const createNodesAndEdges = async (
   parsedArguments: ParsedArgument[],
@@ -16,6 +16,8 @@ const createNodesAndEdges = async (
   rootNodeId: string,
 ) => {
   const { getNodeID, getNodeNumber, addNode, addEdge } = useStore.getState();
+
+  const nodeChildren: Map<string, string[]> = new Map();
 
   const allNodes: Node[] = [];
   const allEdges: Edge[] = [];
@@ -27,7 +29,7 @@ const createNodesAndEdges = async (
     const conclusionNode = {
       id: getNodeID('conclusion'),
       type: 'conclusion',
-      position: { x: 0, y: 0 }, // Position will be set by Elkjs
+      position: { x: 0, y: 0 }, // Position will be set by auto layout
       data: {
         text: arg.conclusion,
         argumentId,
@@ -35,12 +37,17 @@ const createNodesAndEdges = async (
         size: {
           width: nodeStartingDimensions.width,
           height: nodeStartingDimensions.height
-        }, // Initialize size with default values
+        },
         nodeNumber: getNodeNumber('conclusion'),
+        totalWidthOfChildren: 0,
+        rightSpacing: 0,
       },
       style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
+      parentId: rootNodeId,
     };
     allNodes.push(conclusionNode);
+    nodeChildren.set(rootNodeId, [conclusionNode.id]);
+    nodeChildren.set(conclusionNode.id, []);
 
     allEdges.push({
       id: getNodeID('edge'),
@@ -55,7 +62,7 @@ const createNodesAndEdges = async (
       const premiseNode = {
         id: getNodeID('premise'),
         type: 'premise',
-        position: { x: 0, y: 0 },  // Position will be set by Elkjs
+        position: { x: 0, y: 0 },
         data: {
           text: premise,
           argumentId,
@@ -63,12 +70,19 @@ const createNodesAndEdges = async (
           size: {
             width: nodeStartingDimensions.width,
             height: nodeStartingDimensions.height
-          }, // Initialize size with default values
+          },
           nodeNumber: getNodeNumber('premise'),
+          totalWidthOfChildren: 0,
+          rightSpacing: 0,
         },
         style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
+        parentId: conclusionNode.id,
       };
       allNodes.push(premiseNode);
+      nodeChildren.set(premiseNode.id, []);
+      const currChildren = nodeChildren.get(conclusionNode.id) || [];
+      currChildren.push(premiseNode.id)
+      nodeChildren.set(conclusionNode.id, currChildren);
 
       allEdges.push({
         id: getNodeID('edge'),
@@ -85,7 +99,7 @@ const createNodesAndEdges = async (
           const assumptionNode = {
             id: getNodeID('assumption'),
             type: 'assumption',
-            position: { x: 0, y: 0 },  // Position will be set by Elkjs
+            position: { x: 0, y: 0 },
             data: {
               text: assumption.text,
               argumentId,
@@ -93,12 +107,19 @@ const createNodesAndEdges = async (
               size: {
                 width: nodeStartingDimensions.width,
                 height: nodeStartingDimensions.height
-              }, // Initialize size with default values
+              },
               nodeNumber: getNodeNumber('assumption'),
+              totalWidthOfChildren: 0,
+              rightSpacing: 0,
             },
             style: { ...customNodeStyle, visibility: 'hidden' as 'hidden' },
+            parentId: premiseNode.id,
           };
           allNodes.push(assumptionNode);
+          nodeChildren.set(assumptionNode.id, []);
+          const currChildren = nodeChildren.get(premiseNode.id) || [];
+          currChildren.push(assumptionNode.id);
+          nodeChildren.set(premiseNode.id, currChildren);
 
           allEdges.push({
             id: getNodeID('edge'),
@@ -120,7 +141,8 @@ const createNodesAndEdges = async (
   // Measure sizes and update the store
   setTimeout(async () => {
     // Perform the layout
-    const updatedNodes = await performElkLayout({ nodes: useStore.getState().nodes, edges: allEdges }, rootNodeId, argumentId);
+    const updatedNodes = createAutoLayout(useStore.getState().nodes, nodeChildren, rootNodeId);
+    console.log("updatedNodes:", updatedNodes)
 
     // Apply positions after ensuring DOM is ready
     requestAnimationFrame(() => {

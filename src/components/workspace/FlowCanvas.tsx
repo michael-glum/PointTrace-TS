@@ -12,7 +12,7 @@ import ReactFlow, {
   OnEdgesDelete,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { State, useStore } from '../../store';
+import { State, useStore } from '../../store/store';
 import theme from '../../theme';
 import { customNodeStyle } from '../shared/styles/nodeStyles';
 import InputNode from '../nodes/InputNode';

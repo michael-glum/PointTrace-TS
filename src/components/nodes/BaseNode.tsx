@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { HandleProps } from 'reactflow';
-import { useStore } from '../../store';
+import { useStore } from '../../store/store';
 import { keyframes, NodeHeader, spinnerStyle } from '../shared/styles/nodeStyles';
 import { StyledHandleWithLabel, StyledHandle, HandleLabel } from '../shared/styles/handleStyles';
 import { FlexColumn } from '../shared/styles/flexColumn';
@@ -119,15 +119,15 @@ const BaseNode: React.FC<BaseNodeProps> = ({ id, label, handles, position, initi
           </NoBorderWrapper>
         </LabeledBox>
         {handles.map((handle, index) => (
-        <StyledHandleWithLabel key={index} $position={handle.position}>
-          <StyledHandle
-            type={handle.type}
-            position={handle.position}
-            id={handle.id}
-            $isConnected={handleConnections[handle.id!]}
-          />
-          <HandleLabel $position={handle.position}>{handle.id}</HandleLabel>
-        </StyledHandleWithLabel>
+          <StyledHandleWithLabel key={index} $position={handle.position}>
+            <StyledHandle
+              type={handle.type}
+              position={handle.position}
+              id={handle.id}
+              $isConnected={handleConnections[handle.id!]}
+            />
+            <HandleLabel $position={handle.position}>{handle.id}</HandleLabel>
+          </StyledHandleWithLabel>
         ))}
       </FlexColumn>
     </FlexColumn>
